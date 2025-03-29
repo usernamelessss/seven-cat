@@ -46,16 +46,6 @@ jobs:
       run: pyinstaller --onefile -n 七猫小说下载器 main.py
       shell: bash
 
-    - name: Verify Build Output
-      run: |
-        if [ "${{ runner.os }}" == "Windows" ]; then
-          echo "Windows生成文件："
-          dir /B "dist"
-        else
-          echo "Unix生成文件："
-          ls -lh dist/
-        fi
-
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
