@@ -1,17 +1,18 @@
-name: Build and Package Python Executables
+name: Build and Release Python Executables
 
 on:
   workflow_dispatch:
-
+    inputs:
+      version:
+        description: 'Release version (e.g., 1.0.0)'
+        required: true
 
 jobs:
   build:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-
     runs-on: ${{ matrix.os }}
-
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
@@ -22,14 +23,10 @@ jobs:
         python-version: 3.12.4
 
     - name: Install Dependencies
-      run: |
-        pip install -r requirements.txt
-      shell: bash
+      run: pip install -r requirements.txt
 
     - name: Install PyInstaller
-      run: |
-        pip install pyinstaller
-      shell: bash
+      run: pip install pyinstaller
 
     - name: Build Executable
       run: |
@@ -40,10 +37,32 @@ jobs:
         else
           pyinstaller --onefile -n 七猫小说下载器Ubuntu main.py
         fi
-      shell: bash
 
-    - name: Upload Artifacts
-      uses: actions/upload-artifact@v4
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download Artifacts
+      uses: actions/download-artifact@v4
       with:
-        name: executables
-        path: dist/
+        path: artifacts
+
+    - name: Prepare Release Files
+      run: |
+        mkdir -p dist_all
+        find artifacts -type f -exec cp {} dist_all/ \;
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v${{ github.event.inputs.version }}
+        name: Release v${{ github.event.inputs.version }}
+        body: |
+          自动化构建的可执行文件，包含以下平台：
+          - Windows (.exe)
+          - macOS
+          - Ubuntu
+        draft: false
+        prerelease: false
+        files: |
+          dist_all/*
