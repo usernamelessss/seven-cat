@@ -46,10 +46,10 @@ jobs:
       run: pyinstaller --onefile -n 七猫小说下载器 main.py
       shell: bash
 
-    - name: Upload Artifact
+    - name: Upload All Dist Files
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ runner.os }}-build
+        name: dist-files
         path: dist/
 
   release:
@@ -61,34 +61,15 @@ jobs:
     - name: Download All Artifacts
       uses: actions/download-artifact@v4
       with:
-        path: artifact_bundle
-        pattern: '*-build'
-        merge-multiple: true
+        name: dist-files
+        path: release_package/
 
-    - name: Debug Directory Structure
+    - name: Debug Release Files
       run: |
-        echo "=== 下载后的目录结构 ==="
-        tree artifact_bundle -L 4
-        echo "=== 原始文件列表 ==="
-        find artifact_bundle -type f
-
-    - name: Organize Release Files
-      run: |
-        mkdir -p release_package
-        
-        # Windows文件处理
-        find artifact_bundle -path '*/Windows-*/dist/*.exe' -exec cp -v {} release_package/七猫小说下载器_Windows.exe \;
-        
-        # macOS文件处理
-        find artifact_bundle -path '*/macOS-*/dist/七猫小说下载器' -exec cp -v {} release_package/七猫小说下载器_macOS \;
-        
-        # Linux文件处理
-        find artifact_bundle -path '*/Ubuntu-*/dist/七猫小说下载器' -exec cp -v {} release_package/七猫小说下载器_Linux \;
-        
-        # 最终验证
-        echo "=== 准备发布的文件 ==="
+        echo "=== 下载后的文件列表 ==="
         ls -lh release_package/
-        [ "$(ls -A release_package)" ] || (echo "错误：发布目录为空"; exit 1)
+        echo "=== 文件树结构 ==="
+        tree release_package/
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1
@@ -96,20 +77,13 @@ jobs:
         tag_name: v${{ github.event.inputs.version }}
         name: 七猫小说下载器 v${{ github.event.inputs.version }}
         body: |
-          ### 多平台支持
-          | 平台        | 文件名称                     |
-          |-------------|-----------------------------|
-          | Windows     | `七猫小说下载器_Windows.exe` |
-          | macOS       | `七猫小说下载器_macOS`       |
-          | Linux       | `七猫小说下载器_Linux`       |
-          
+          ### 发布说明
           自动构建版本包含以下特性：
           - 跨平台兼容性优化
           - 依赖库版本更新
           - 自动签名验证
         draft: false
         prerelease: false
-        files: |
-          release_package/*
+        files: release_package/*
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
