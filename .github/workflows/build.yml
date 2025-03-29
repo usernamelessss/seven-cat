@@ -77,9 +77,9 @@ jobs:
 
     - name: Move and Rename Files
       run: |
-        mv release_package/windows/* release_package/七猫小说下载器_Windows.exe
-        mv release_package/macos/* release_package/七猫小说下载器_macOS
-        mv release_package/linux/* release_package/七猫小说下载器_Linux
+        mv release_package/windows/* release_package/SevenCat_Windows.exe
+        mv release_package/macos/* release_package/SevenCat_macOS
+        mv release_package/linux/* release_package/SevenCat_Linux
         echo "=== 文件移动并重命名完成 ==="
         ls -lh release_package/
 
