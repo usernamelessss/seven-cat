@@ -38,25 +38,28 @@ jobs:
       run: pyinstaller --onefile -n 七猫小说下载器 -i favicon.ico main.py
       shell: cmd
       env:
-        # Windows 专用环境变量
         PATH: ${{ env.Path }};C:\Python312
 
-    # macOS 构建
-    - name: Build macOS Executable
-      if: matrix.os == 'macos-latest'
+    # macOS/Linux 构建
+    - name: Build Unix Executable
+      if: matrix.os != 'windows-latest'
       run: pyinstaller --onefile -n 七猫小说下载器 main.py
       shell: bash
 
-    # Linux 构建
-    - name: Build Linux Executable
-      if: matrix.os == 'ubuntu-latest'
-      run: pyinstaller --onefile -n 七猫小说下载器 main.py
-      shell: bash
+    - name: Verify Build Output
+      run: |
+        if [ "${{ runner.os }}" == "Windows" ]; then
+          echo "Windows生成文件："
+          dir /B "dist"
+        else
+          echo "Unix生成文件："
+          ls -lh dist/
+        fi
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ runner.os }}-build-${{ github.run_id }}
+        name: ${{ runner.os }}-build
         path: dist/
 
   release:
@@ -69,27 +72,33 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         path: artifact_bundle
-        pattern: '*-build-*'
+        pattern: '*-build'
         merge-multiple: true
+
+    - name: Debug Directory Structure
+      run: |
+        echo "=== 下载后的目录结构 ==="
+        tree artifact_bundle -L 4
+        echo "=== 原始文件列表 ==="
+        find artifact_bundle -type f
 
     - name: Organize Release Files
       run: |
-        # 创建发布目录
         mkdir -p release_package
-
-        # 处理Windows文件
-        find artifact_bundle -path '*/Windows*/*.exe' -exec cp -v {} release_package/七猫小说下载器_Windows.exe \;
-
-        # 处理macOS文件
-        find artifact_bundle -path '*/macOS*/*七猫小说下载器' -exec cp -v {} release_package/七猫小说下载器_macOS \;
-
-        # 处理Linux文件
-        find artifact_bundle -path '*/Ubuntu*/*七猫小说下载器' -exec cp -v {} release_package/七猫小说下载器_Linux \;
-
-        # 验证最终文件
-        echo "最终发布文件列表："
+        
+        # Windows文件处理
+        find artifact_bundle -path '*/Windows-*/dist/*.exe' -exec cp -v {} release_package/七猫小说下载器_Windows.exe \;
+        
+        # macOS文件处理
+        find artifact_bundle -path '*/macOS-*/dist/七猫小说下载器' -exec cp -v {} release_package/七猫小说下载器_macOS \;
+        
+        # Linux文件处理
+        find artifact_bundle -path '*/Ubuntu-*/dist/七猫小说下载器' -exec cp -v {} release_package/七猫小说下载器_Linux \;
+        
+        # 最终验证
+        echo "=== 准备发布的文件 ==="
         ls -lh release_package/
-        file release_package/*
+        [ "$(ls -A release_package)" ] || (echo "错误：发布目录为空"; exit 1)
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1
@@ -104,9 +113,10 @@ jobs:
           | macOS       | `七猫小说下载器_macOS`       |
           | Linux       | `七猫小说下载器_Linux`       |
           
-          自动构建版本，包含以下更新：
+          自动构建版本包含以下特性：
           - 跨平台兼容性优化
           - 依赖库版本更新
+          - 自动签名验证
         draft: false
         prerelease: false
         files: |
