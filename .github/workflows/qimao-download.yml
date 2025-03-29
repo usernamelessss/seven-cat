@@ -1,0 +1,56 @@
+name: 七猫小说下载
+
+on:
+  workflow_dispatch:
+    inputs:
+      novel_input:
+        description: '小说ID或URL (从七猫小说页面获取)'
+        required: true
+      output_dir:
+        description: '输出目录 (默认为output)'
+        default: 'output'
+
+permissions:
+  contents: write
+
+jobs:
+  download:
+    runs-on: ubuntu-latest
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v3
+
+    - name: 设置Python环境
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        cache: 'pip'
+
+    - name: 安装依赖
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests bs4 ebooklib pycryptodome
+
+    - name: 运行下载器
+      run: |
+        python main.py \
+          --input "${{ github.event.inputs.novel_input }}" \
+          --output "${{ github.event.inputs.output_dir }}"
+
+    - name: 压缩结果文件
+      run: |
+        cd "${{ github.event.inputs.output_dir }}" && \
+        zip -r ../qimao-novel.zip *
+
+    - name: 上传制品
+      uses: actions/upload-artifact@v4
+      with:
+        name: qimao-novel-${{ github.event.inputs.novel_input }}
+        path: qimao-novel.zip
+        retention-days: 7
+
+    - name: 显示完成信息
+      run: |
+        echo "✅ 小说下载完成！"
+        echo "请点击上方 'Summary' 标签，在 'Artifacts' 部分下载文件。"
+        echo "文件保存期限为7天。"
