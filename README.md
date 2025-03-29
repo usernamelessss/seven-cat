@@ -104,9 +104,9 @@ graph TD
 
 | 平台 | 下载链接 | 说明 |
 |------|---------|------|
-| Windows | [`Fanqie-Novel-Downloader-Windows.zip`](https://github.com/rabbits0209/seven-cat/releases) | 解压后双击运行 `七猫小说下载器.exe` |
-| MacOS | [`Fanqie-Novel-Downloader-MacOS.zip`](https://github.com/rabbits0209/seven-cat/releases) | 解压后运行 `七猫小说下载器` 应用 |
-| Linux | [`Fanqie-Novel-Downloader-Linux.zip`](https://github.com/rabbits0209/seven-cat/releases) | 解压后运行 `七猫小说下载器` 可执行文件 |
+| Windows | [`Fanqie-Novel-Downloader-Windows.zip`](https://github.com/rabbits0209/seven-cat/releases) |
+| MacOS | [`Fanqie-Novel-Downloader-MacOS.zip`](https://github.com/rabbits0209/seven-cat/releases) |
+| Linux | [`Fanqie-Novel-Downloader-Linux.zip`](https://github.com/rabbits0209/seven-cat/releases) |
 
 </details>
 
