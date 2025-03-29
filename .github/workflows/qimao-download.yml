@@ -46,7 +46,7 @@ jobs:
 
     - name: 运行下载器
       run: |
-        python main.py \
+        python remain.py \
           --input "${{ env.CLEAN_ID }}" \
           --output "${{ github.event.inputs.output_dir }}"
 
