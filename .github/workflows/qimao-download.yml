@@ -20,12 +20,18 @@ jobs:
     - name: 检出代码
       uses: actions/checkout@v3
 
-    - name: 清理输入参数
+    - name: 解析小说ID
+      shell: bash
       run: |
-        # 从输入中提取纯数字ID
-        clean_id=$(echo "${{ github.event.inputs.novel_input }}" | grep -oE '\d+')
-        echo "CLEAN_ID=$clean_id" >> $GITHUB_ENV
-        echo "提取到的小说ID: $clean_id"
+        # 使用增强正则匹配数字串
+        if [[ "${{ github.event.inputs.novel_input }}" =~ [^0-9]*([0-9]+) ]]; then
+          CLEAN_ID=${BASH_REMATCH[1]}
+          echo "提取到的小说ID: $CASH_REMATCH"
+          echo "CLEAN_ID=$CLEAN_ID" >> $GITHUB_ENV
+        else
+          echo "::error::无效输入 - 无法提取小说ID: ${{ github.event.inputs.novel_input }}"
+          exit 1
+        fi
 
     - name: 设置Python环境
       uses: actions/setup-python@v4
@@ -41,7 +47,7 @@ jobs:
     - name: 运行下载器
       run: |
         python main.py \
-          --input "${{ github.event.inputs.novel_input }}" \
+          --input "${{ env.CLEAN_ID }}" \
           --output "${{ github.event.inputs.output_dir }}"
 
     - name: 压缩结果文件
