@@ -53,12 +53,6 @@ jobs:
       run: pyinstaller --onefile -n 七猫小说下载器 main.py
       shell: bash
 
-    - name: Verify Build Output
-      run: |
-        echo "生成文件列表："
-        ls -lh dist/
-        du -sh dist/*
-
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
