@@ -13,12 +13,13 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
+    
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Setup Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: 3.12.4
 
@@ -28,15 +29,21 @@ jobs:
     - name: Install PyInstaller
       run: pip install pyinstaller
 
-    - name: Build Executable
-      run: |
-        if [ "${{ matrix.os }}" == "windows-latest" ]; then
-          pyinstaller --onefile -n 七猫小说下载器windows -i favicon.ico main.py
-        elif [ "${{ matrix.os }}" == "macos-latest" ]; then
-          pyinstaller --onefile -n 七猫小说下载器MacOS main.py
-        else
-          pyinstaller --onefile -n 七猫小说下载器Ubuntu main.py
-        fi
+    # 各平台独立构建步骤
+    - name: Build Windows Executable
+      if: matrix.os == 'windows-latest'
+      run: pyinstaller --onefile -n 七猫小说下载器windows -i favicon.ico main.py
+      shell: cmd  # 显式指定CMD shell
+
+    - name: Build macOS Executable
+      if: matrix.os == 'macos-latest'
+      run: pyinstaller --onefile -n 七猫小说下载器MacOS main.py
+      shell: bash
+
+    - name: Build Linux Executable
+      if: matrix.os == 'ubuntu-latest'
+      run: pyinstaller --onefile -n 七猫小说下载器Linux main.py
+      shell: bash
 
   release:
     needs: build
@@ -49,8 +56,9 @@ jobs:
 
     - name: Prepare Release Files
       run: |
-        mkdir -p dist_all
-        find artifacts -type f -exec cp {} dist_all/ \;
+        mkdir -p release_files
+        find artifacts -name '*.exe' -exec mv {} release_files/ \;
+        find artifacts -name '七猫小说下载器*' ! -name '*.exe' -exec mv {} release_files/ \;
 
     - name: Create Release
       uses: softprops/action-gh-release@v1
@@ -58,11 +66,9 @@ jobs:
         tag_name: v${{ github.event.inputs.version }}
         name: Release v${{ github.event.inputs.version }}
         body: |
-          自动化构建的可执行文件，包含以下平台：
-          - Windows (.exe)
-          - macOS
-          - Ubuntu
-        draft: false
-        prerelease: false
+          多平台可执行文件版本：
+          - Windows: 七猫小说下载器windows.exe
+          - macOS: 七猫小说下载器MacOS
+          - Linux: 七猫小说下载器Linux
         files: |
-          dist_all/*
+          release_files/*
