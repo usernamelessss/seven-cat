@@ -1,11 +1,12 @@
-name: Build and Release Python Executables
+name: Build and Release Pipeline
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version (e.g., 1.0.0)'
+        description: 'Semantic Version (e.g., 1.0.0)'
         required: true
+        default: '1.0.0'
 
 jobs:
   build:
@@ -15,60 +16,106 @@ jobs:
     runs-on: ${{ matrix.os }}
     
     steps:
-    - name: Checkout code
+    - name: Checkout Repository
       uses: actions/checkout@v4
 
-    - name: Setup Python
+    - name: Setup Python 3.12
       uses: actions/setup-python@v5
       with:
-        python-version: 3.12.4
+        python-version: "3.12.4"
 
-    - name: Install Dependencies
-      run: pip install -r requirements.txt
+    - name: Install Requirements
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
 
     - name: Install PyInstaller
       run: pip install pyinstaller
 
-    # 各平台独立构建步骤
+    # Windows 构建
     - name: Build Windows Executable
       if: matrix.os == 'windows-latest'
-      run: pyinstaller --onefile -n 七猫小说下载器windows -i favicon.ico main.py
-      shell: cmd  # 显式指定CMD shell
+      run: pyinstaller --onefile -n 七猫小说下载器 -i favicon.ico main.py
+      shell: cmd
+      env:
+        # Windows 专用环境变量
+        PATH: ${{ env.Path }};C:\Python312
 
+    # macOS 构建
     - name: Build macOS Executable
       if: matrix.os == 'macos-latest'
-      run: pyinstaller --onefile -n 七猫小说下载器MacOS main.py
+      run: pyinstaller --onefile -n 七猫小说下载器 main.py
       shell: bash
 
+    # Linux 构建
     - name: Build Linux Executable
       if: matrix.os == 'ubuntu-latest'
-      run: pyinstaller --onefile -n 七猫小说下载器Linux main.py
+      run: pyinstaller --onefile -n 七猫小说下载器 main.py
       shell: bash
+
+    - name: Verify Build Output
+      run: |
+        echo "生成文件列表："
+        ls -lh dist/
+        du -sh dist/*
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ runner.os }}-build-${{ github.run_id }}
+        path: dist/
 
   release:
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+
     steps:
-    - name: Download Artifacts
+    - name: Download All Artifacts
       uses: actions/download-artifact@v4
       with:
-        path: artifacts
+        path: artifact_bundle
+        pattern: '*-build-*'
+        merge-multiple: true
 
-    - name: Prepare Release Files
+    - name: Organize Release Files
       run: |
-        mkdir -p release_files
-        find artifacts -name '*.exe' -exec mv {} release_files/ \;
-        find artifacts -name '七猫小说下载器*' ! -name '*.exe' -exec mv {} release_files/ \;
+        # 创建发布目录
+        mkdir -p release_package
 
-    - name: Create Release
+        # 处理Windows文件
+        find artifact_bundle -path '*/Windows*/*.exe' -exec cp -v {} release_package/七猫小说下载器_Windows.exe \;
+
+        # 处理macOS文件
+        find artifact_bundle -path '*/macOS*/*七猫小说下载器' -exec cp -v {} release_package/七猫小说下载器_macOS \;
+
+        # 处理Linux文件
+        find artifact_bundle -path '*/Ubuntu*/*七猫小说下载器' -exec cp -v {} release_package/七猫小说下载器_Linux \;
+
+        # 验证最终文件
+        echo "最终发布文件列表："
+        ls -lh release_package/
+        file release_package/*
+
+    - name: Create GitHub Release
       uses: softprops/action-gh-release@v1
       with:
         tag_name: v${{ github.event.inputs.version }}
-        name: Release v${{ github.event.inputs.version }}
+        name: 七猫小说下载器 v${{ github.event.inputs.version }}
         body: |
-          多平台可执行文件版本：
-          - Windows: 七猫小说下载器windows.exe
-          - macOS: 七猫小说下载器MacOS
-          - Linux: 七猫小说下载器Linux
+          ### 多平台支持
+          | 平台        | 文件名称                     |
+          |-------------|-----------------------------|
+          | Windows     | `七猫小说下载器_Windows.exe` |
+          | macOS       | `七猫小说下载器_macOS`       |
+          | Linux       | `七猫小说下载器_Linux`       |
+          
+          自动构建版本，包含以下更新：
+          - 跨平台兼容性优化
+          - 依赖库版本更新
+        draft: false
+        prerelease: false
         files: |
-          release_files/*
+          release_package/*
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
