@@ -28,7 +28,6 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-
     - name: Install PyInstaller
       run: pip install pyinstaller
 
@@ -101,8 +100,8 @@ jobs:
           | Windows     | 七猫小说下载器_Windows.exe   |
           | macOS       | 七猫小说下载器_macOS         |
           | Linux       | 七猫小说下载器_Linux         |
-      draft: false
-      prerelease: false
-      files: release_package/*
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        draft: false
+        prerelease: false
+        files: release_package/*
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
