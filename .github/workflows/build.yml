@@ -49,7 +49,7 @@ jobs:
     - name: Upload All Dist Files
       uses: actions/upload-artifact@v4
       with:
-        name: dist-files
+        name: dist-files-${{ matrix.os }}-${{ github.run_id }}
         path: dist/
 
   release:
@@ -61,7 +61,7 @@ jobs:
     - name: Download All Artifacts
       uses: actions/download-artifact@v4
       with:
-        name: dist-files
+        name: '*'
         path: release_package/
 
     - name: Debug Release Files
