@@ -20,6 +20,13 @@ jobs:
     - name: 检出代码
       uses: actions/checkout@v3
 
+    - name: 清理输入参数
+      run: |
+        # 从输入中提取纯数字ID
+        clean_id=$(echo "${{ github.event.inputs.novel_input }}" | grep -oE '\d+')
+        echo "CLEAN_ID=$clean_id" >> $GITHUB_ENV
+        echo "提取到的小说ID: $clean_id"
+
     - name: 设置Python环境
       uses: actions/setup-python@v4
       with:
@@ -39,13 +46,13 @@ jobs:
 
     - name: 压缩结果文件
       run: |
-        cd "${{ github.event.inputs.output_dir }}" && \
-        zip -r ../qimao-novel.zip *
+        cd "${{ github.event.inputs.output_dir }}/${{ env.CLEAN_ID }}" && \
+        zip -r ../../qimao-novel.zip *
 
     - name: 上传制品
       uses: actions/upload-artifact@v4
       with:
-        name: qimao-novel-${{ github.event.inputs.novel_input }}
+        name: qimao-novel-${{ env.CLEAN_ID }}
         path: qimao-novel.zip
         retention-days: 7
 
