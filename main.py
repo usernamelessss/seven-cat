@@ -53,7 +53,6 @@ class QimaoAutoProcessor:
 		self.catalog = {}  # 章节目录字典（chapter_id: title）
 		self.failed_files = []  # 记录处理失败的文件
 
-
 	@staticmethod
 	def sanitize_filename(filename: str) -> str:
 		"""清理非法文件名字符，替换为下划线"""
@@ -146,8 +145,8 @@ class QimaoAutoProcessor:
 
 			# 创建小说专属目录：output/book_id/
 			# self.novel_subdir = os.path.join(output_dir, self.book_id)
-			# os.makedirs(self.novel_subdir, exist_ok=True)
-			os.makedirs(output_dir, exist_ok=True)
+			self.novel_subdir = os.path.join(output_dir)
+			os.makedirs(self.novel_subdir, exist_ok=True)
 
 			print(f"\n正在处理《{self.novel_meta['title']}》")
 			self.get_chapters()
@@ -213,7 +212,7 @@ class QimaoAutoProcessor:
 			# ID
 			book_id = data.get("id")
 			# 简介
-			book_info= data.get("intro").replace("<br>", "\n")
+			book_info = data.get("intro").replace("<br>", "\n")
 			# 时间戳
 			# update_time = datetime.datetime.fromtimestamp(int(data["update_time"])).strftime("%Y-%m-%d %H:%M:%S")
 
@@ -474,13 +473,13 @@ if __name__ == "__main__":
 
 	if mode == "1":
 		user_input = input("请输入小说ID或链接：").strip()
-		output_dir = input("输出目录（默认程序所在目录）: ").strip() or os.getcwd()
+		output_dir = input("输出目录: ").strip() or "book"
 		processor.run(user_input, output_dir)
 	elif mode == "2":
 		keyword = input("请输入搜索关键词：").strip()
 		book_id = processor.search_novel(keyword)
 		if book_id and book_id != "exit":
-			output_dir = input("输出目录（默认程序所在目录）: ").strip() or os.getcwd()
+			output_dir = input("输出目录: ").strip() or "book"
 			processor.run(book_id, output_dir)
 	else:
 		print("无效的选择")
