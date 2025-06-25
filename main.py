@@ -145,8 +145,9 @@ class QimaoAutoProcessor:
 			self.get_metadata()
 
 			# 创建小说专属目录：output/book_id/
-			self.novel_subdir = os.path.join(output_dir, self.book_id)
-			os.makedirs(self.novel_subdir, exist_ok=True)
+			# self.novel_subdir = os.path.join(output_dir, self.book_id)
+			# os.makedirs(self.novel_subdir, exist_ok=True)
+			os.makedirs(output_dir, exist_ok=True)
 
 			print(f"\n正在处理《{self.novel_meta['title']}》")
 			self.get_chapters()
@@ -473,13 +474,13 @@ if __name__ == "__main__":
 
 	if mode == "1":
 		user_input = input("请输入小说ID或链接：").strip()
-		output_dir = input("输出目录（默认output）: ").strip() or "output"
+		output_dir = input("输出目录（默认程序所在目录）: ").strip() or os.getcwd()
 		processor.run(user_input, output_dir)
 	elif mode == "2":
 		keyword = input("请输入搜索关键词：").strip()
 		book_id = processor.search_novel(keyword)
 		if book_id and book_id != "exit":
-			output_dir = input("输出目录（默认output）: ").strip() or "output"
+			output_dir = input("输出目录（默认程序所在目录）: ").strip() or os.getcwd()
 			processor.run(book_id, output_dir)
 	else:
 		print("无效的选择")
